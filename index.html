@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    * {
+      margin: 0;
+      overflow: hidden;
+    }
+    body {
+      position: relative;
+    }
+
+    body,
+    html {
+      overflow: hidden;
+      background: #000;
+      color: rgb(220, 220, 220);
+    }
+    canvas {
+      background-color: #000;
+    }
+    img {
+      position: fixed; /* Sit on top of the page content */
+      display: block; /* Hidden by default */
+      height: 50px;
+      top: 0;
+      right: 0;
+      z-index: 10;
+    }
+    #overlay {
+      position: fixed;
+      display: none;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1;
+      cursor: pointer;
+    }
+
+    #text {
+      font-family: Arial;
+      position: absolute;
+      height: 70%;
+      width: 70%;
+      top: 50%;
+      left: 50%;
+      font-size: 30px;
+      color: black;
+      transform: translate(-50%, -50%);
+      -ms-transform: translate(-50%, -50%);
+      background: #333;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .slidecontainer {
+      width: 100%;
+    }
+
+    .sensitSlider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 25px;
+      border-radius: 20px;
+      background: #000000;
+      outline: none;
+      opacity: 0.7;
+      -webkit-transition: 0.2s;
+      transition: opacity 0.2s;
+      margin-bottom: 5%;
+    }
+
+    .sensitSlider:hover {
+      opacity: 1;
+    }
+
+    .sensitSlider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: #8c8c8c;
+      cursor: pointer;
+    }
+
+    .sensitSlider::-moz-range-thumb {
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: #8c8c8c;
+      cursor: pointer;
+    }
+    p {
+      color: #bfbfbf;
+    }
+  </style>
+  <head>
+    <title></title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <canvas></canvas>
+    <img
+      src="https://cdn.glitch.com/72202fac-7ff8-4f4f-a7bd-c1b7a41ad338%2F477355F3-64B9-4CBA-837D-96775016BC68.png?v=1602798429468"
+      id="settings"
+    />
+    <div id="overlay">
+      <div id="text">
+        <p id="sensit" style="margin-top: 1%;"></p>
+        <div class="slidecontainer">
+          <input
+            type="range"
+            min="1"
+            max="100"
+            value="20"
+            class="sensitSlider"
+            id="sensitSlider"
+          />
+
+          <p id="ballSizeTxt"></p>
+          <input
+            type="range"
+            min="1"
+            max="100"
+            value="20"
+            class="sensitSlider"
+            id="ballSize"
+          />
+
+          <p id="ballSpeedTxt"></p>
+          <input
+            type="range"
+            min="5"
+            max="50"
+            value="20"
+            class="sensitSlider"
+            id="ballSpeedSlider"
+          />
+        </div>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
