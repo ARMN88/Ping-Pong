@@ -16,7 +16,7 @@ You can play it here: https://poing.glitch.me/
 * Try to hit the ball to the other player's wall.
 
 ## Update Log
-# Tuesday, November 17, 2020
+### Tuesday, November 17, 2020
 * Major Bug Fix:
   * Fixed enemy paddle never hitting the ball.
 * Randomized enemy speed.
