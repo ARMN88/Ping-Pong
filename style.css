@@ -1,0 +1,14 @@
+* {
+  margin: 0;
+  overflow: hidden;
+}
+
+html,
+body {
+  background: black;
+  height: 100%;
+  overflow: hidden;
+}
+img {
+  position: absolute;
+}

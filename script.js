@@ -1,284 +1,318 @@
 /*
-           +--------------------------------------------------+
-           |  ******************   TODO   ******************  |
-           |                                                  |
-           |  X add a player paddle                           | 
-           |  X add movement and bouncing off paddle          |
-           |  X add enemy paddle                              |
-           |  X make predicting ai (nothing too fancy tho)    |
-           |  X make center line                              |
-           |  X make scoring and add scoreboard               |
-           |  * add settings and pause                        |
-           |  X (optional) MAKE IT MOBILE COMPATABLE          |
-           |                                                  |
-           +--------------------------------------------------+
+                          TODO
+                X make a snake object
+                  > x and y coords
+                  > size
+                  > tail array of objects of x and y coords ex: [{x: , y: }]
+                X loop through and draw tail
+                  > make a py and px variable to store the previous coordinates
+                X create movement
+                * die when hit edges
+                * add apple and spawn random
+                * delete apple when you eat it, and move it
+                * add one to the tail of the snake when you eat an apple
+                * die when you hit yourself
+                * add score
+                * (optional) add sound effects
+                * (optional) mobile compatible
+                
 */
 
-document.addEventListener("touchmove", function(e) {
-  e.preventDefault();
-});
+let direction = "";
+let rate = 10;
 
-// Settings
-let sensitivity = 15;
-let ballSpeed = 10;
-let ballSize = 30;
+let x = 0;
+let y = 0;
+let px = 0;
+let py = 0;
 
-// ~~~~~~~~~ Settings HTML ~~~~~~~~~~~~~~~
-// sensitivity
-const sensitSlider = document.querySelector("#sensitSlider");
-const sensit = document.getElementById("sensit");
-
-sensit.innerHTML = "Sensitivity: " + 20;
-
-sensitSlider.oninput = function() {
-  sensit.innerHTML = "Sensitivity: " + this.value;
-  sensitivity = Number(this.value);
-  player.speed = sensitivity;
-};
-
-// ballSize
-const ballSizeTxt = document.querySelector("#ballSizeTxt");
-const ballSizeSlider = document.querySelector("#ballSize");
-
-ballSizeTxt.innerHTML = "Ball Size: " + ballSize;
-ballSizeSlider.oninput = function() {
-  ballSizeTxt.innerHTML = "Ball Size: " + this.value;
-  ballSize = Number(this.value);
-  ball.size = ballSize;
-};
-
-// ballSpeed
-const ballSpeedTxt = document.querySelector("#ballSpeedTxt");
-const ballSpeedSlider = document.querySelector("#ballSpeedSlider");
-let ballDx = Math.random() * ballSpeed + 5;
-let ballDy = Math.random() * ballSpeed + 5;
-
-ballSpeedTxt.innerHTML = "Ball Speed: " + ballSpeed;
-ballSpeedSlider.oninput = function() {
-  ballSpeed = Number(this.value);
-  ballSpeedTxt.innerHTML = "Ball Speed: " + ballSpeed;
-  ballDx = Math.random() * ballSpeed + 5;
-  ballDy = Math.random() * ballSpeed + 10;
-};
-
-// Two Players
-
-// Use The Canvas and get the context
-const canvas = document.querySelector("canvas");
-const ctx = canvas.getContext("2d");
-
-// fit the canvas to the browser window
-canvas.height = innerHeight;
-canvas.width = innerWidth;
-const newWidth = innerWidth;
-const newHeight = innerHeight;
-
-let pause = undefined;
-let isPaused = false;
-
-// fill the objects grey
-ctx.fillStyle = "#cecece";
-
-// make a ball object
-let ball = {
-  size: ballSize,
-  x: innerWidth / 2 - ballSize / 2,
-  y: innerHeight / 2 - ballSize / 2,
-  dx: ballDx,
-  dy: ballDy
-};
-
-// make a player object
-let player = {
-  size: {
-    x: 20,
-    y: 150
-  },
-
-  x: 20,
-  y: innerHeight / 2 - 75,
-
-  speed: 20,
+// make a snake object
+let snake = {
+  size: 20,
+  x: Math.ceil(innerWidth / 2 / 20) * 20,
+  y: Math.ceil(innerHeight / 2 / 20) * 20,
+  dx: 20,
   dy: 0,
-  score: 0
+  tail: [
+    { x: innerWidth + 20, y: innerHeight + 20 },
+    { x: innerWidth + 20, y: innerHeight + 20 },
+    { x: innerWidth + 20, y: innerHeight + 20 }
+  ]
 };
 
-// make a computer object
-let computer = {
-  size: {
-    x: 20,
-    y: 150
-  },
-
-  x: innerWidth - 40,
-  y: innerHeight / 2 - 75,
-  score: 0
+// make an apple object
+let apple = {
+  x:
+    Math.ceil(
+      Math.floor(Math.random() * (innerWidth - snake.size * 2) + 1) / snake.size
+    ) * snake.size,
+  y:
+    Math.ceil(
+      Math.floor(Math.random() * (innerHeight - snake.size * 2) + 1) /
+        snake.size
+    ) * snake.size
 };
 
-// create a function to update the canvas for movement
-function update() {
-  // clear the canvas before drawing
-  ctx.clearRect(0, 0, newWidth, newHeight);
-  //player.speed = sensitivity;
+// store previous positions
+let pre = {
+  x: snake.x,
+  y: snake.y,
+  size: 20
+};
 
-  // enter the score
-  ctx.font = "50px Arial";
-  ctx.fillText(player.score + "   " + computer.score, newWidth / 2 - 50, 50);
+const color = [
+  [219, 56, 56],
+  [246, 98, 31],
+  [254, 204, 47],
+  [178, 194, 37],
+  [64, 164, 216],
+  [163, 99, 217],
+  [238, 101, 122]
+];
 
-  // draw a straight line across the screen
-  ctx.strokeStyle = "cecece";
-  ctx.lineWidth = 4;
-  ctx.moveTo(newWidth / 2, 0);
-  ctx.lineTo(newWidth / 2, newHeight);
-  ctx.stroke();
-  ctx.lineWidth = 1;
-
-  // ~~~~~~~~~~~~~ BALL ~~~~~~~~~~~~~~~~~~~
-  // draw the ball and update its coords according to the dx and dy (velocity)
-  detectCollide();
-
-  ctx.fillRect(ball.x, ball.y, ball.size, ball.size);
-  ball.x += ball.dx;
-  ball.y += ball.dy;
-
-  // Bounce the ball when it hits the corners
-  //if (ball.x <= 0 || ball.x + ball.size >= newWidth) {
-  //ball.dx *= -1;
-  //}
-  if (ball.y <= 0 || ball.y + ball.size >= newHeight) {
-    ball.dy *= -1;
-  }
-
-  // ~~~~~~~~~~~~~ PLAYER ~~~~~~~~~~~~~~~~~~~~
-  // draw the player and update it
-
-  ctx.fillRect(player.x, player.y, player.size.x, player.size.y);
-  player.y += player.dy;
-
-  // ~~~~~~~~~~~~ COMPUTER ~~~~~~~~~~~~~~~~~~~~
-  // DRAW THE COMPUTER AND ALIGN HIM WITH THE BALL ON THE Y AXIS
-  ctx.fillRect(computer.x, computer.y, computer.size.x, computer.size.y);
-  if (ball.dx === Math.abs(ball.dx) && ball.x > newWidth / 2) {
-    if (ball.y > computer.y) {
-      if (ball.y !== computer.y) {
-        computer.y += 5 + ballSpeed / 3;
-      }
-    }
-    if (ball.y < computer.y) {
-      if (ball.y !== computer.y) {
-        computer.y -= 5 + ballSpeed / 3;
-      }
-    }
-  }
-
-  // repeat function for each frame
-  pause = window.requestAnimationFrame(update);
+// initialize the setup
+function setup() {
+  // fit the canvas to the screen
+  createCanvas(innerWidth, innerHeight);
+  frameRate(rate);
+  noStroke();
+  //snake.dx = snake.size;
 }
-//initiate the firt function to start the movement
-document.load = update();
+let colorInt = 1;
 
-function detectCollide() {
-  // detect wall collisions
-  if (player.y <= 0) {
-    player.y = 0;
-  } else if (player.y >= canvas.height - player.size.y) {
-    player.y = canvas.height - player.size.y;
+// draw each frame
+function draw() {
+  // clear the canvas
+  background(0);
+  textSize(32);
+  text("Score: " + (snake.tail.length - 3) * 5, 10, 30);
+
+  if (direction === "right") {
+    MoveRight();
+  } else if (direction === "left") {
+    MoveLeft();
+  } else if (direction === "up") {
+    MoveLeft();
+  } else if (direction === "down") {
+    MoveDown();
+  }
+  // loop through and draw the tail
+  for (let i = 0; i < snake.tail.length; i++) {
+    fill(color[colorInt][0], color[colorInt][1], color[colorInt][2]);
+    if (colorInt === 6) {
+      colorInt = 0;
+    } else {
+      colorInt++;
+    }
+    rect(pre.x, pre.y, snake.size, snake.size);
+    snake.tail[i].x = snake.tail[i].x + pre.x;
+    pre.x = snake.tail[i].x - pre.x;
+    snake.tail[i].x = snake.tail[i].x - pre.x;
+    snake.tail[i].y += pre.y;
+    pre.y = snake.tail[i].y - pre.y;
+    snake.tail[i].y -= pre.y;
+  }
+  if (direction === "right") {
+    MoveRight();
+  } else if (direction === "left") {
+    MoveLeft();
+  } else if (direction === "up") {
+    MoveLeft();
+  } else if (direction === "down") {
+    MoveDown();
+  }
+  colorInt = 1;
+  // draw the head
+  fill(color[0][0], color[0][1], color[0][2]);
+  rect(snake.x, snake.y, snake.size, snake.size);
+  fill(100, 255, 0);
+
+  // add the apple
+  fill(Math.floor(Math.random() * 100) + 155, 0, 0);
+  rect(apple.x, apple.y, snake.size, snake.size);
+  fill(100, 255, 0);
+
+  text("Score: " + (snake.tail.length - 3) * 5, 10, 30);
+
+  pre.x = snake.x;
+  pre.y = snake.y;
+  if (direction === "right") {
+    MoveRight();
+  } else if (direction === "left") {
+    MoveLeft();
+  } else if (direction === "up") {
+    MoveUp();
+  } else if (direction === "down") {
+    MoveDown();
   }
 
-  // detect paddle collisions with the ball
-  if (ball.x < 0 || ball.x >= newWidth) {
-    if (ball.x < 0) {
-      computer.score++;
-    } else if (ball.x >= innerWidth) {
-      player.score++;
+  snake.x += snake.dx;
+  snake.y += snake.dy;
+
+  for (let j = 0; j < snake.tail.length; j++) {
+    if (snake.tail[j].x === snake.x && snake.tail[j].y === snake.y) {
+      frameRate(0);
+      rate = 0;
     }
-    ball.dx = 0;
-    ball.dy = 0;
+  }
+  DetectCollide();
+}
 
-    ball.x = innerWidth / 2 - ballSize / 2;
-    ball.y = innerHeight / 2 - ballSize / 2;
-
+function DetectCollide() {
+  // detect when you hit the sides
+  /*if (
+    snake.x < 0 ||
+    snake.x > innerWidth - snake.size / 2 ||
+    snake.y < 0 ||
+    snake.y > innerHeight - snake.size / 2
+  ) {
+    frameRate(0);
+    rate = 0;
     setTimeout(function() {
-      ball.dx = ballDx;
-      ball.dy = ballDy;
+      frameRate(10);
+      rate = 10;
+      direction = "right";
+      snake = {
+        size: 20,
+        x: Math.ceil(innerWidth / 2 / 20) * 20,
+        y: Math.ceil(innerHeight / 2 / 20) * 20,
+        dx: 20,
+        dy: 0,
+        tail: [
+          { x: innerWidth + 20, y: innerHeight + 20 },
+          { x: innerWidth + 20, y: innerHeight + 20 },
+          { x: innerWidth + 20, y: innerHeight + 20 }
+        ]
+      };
     }, 1000);
+  }*/
+  if (snake.x < 0) {
+    snake.x = Math.floor(innerWidth / snake.size) * snake.size;
+  } else if (snake.x > innerWidth - snake.size / 2) {
+    snake.x = 0;
+  } else if (snake.y < 0) {
+    snake.y = Math.floor(innerHeight / snake.size) * snake.size;
+  } else if (snake.y > innerHeight - snake.size / 2) {
+    snake.y = 0;
   }
-  if (
-    ball.x <= player.x + player.size.x &&
-    ball.x + ball.size >= player.x &&
-    ball.y <= player.y + player.size.y &&
-    ball.y + player.size.y >= player.y + 100
-  ) {
-    ball.dx *= -1;
-  }
-  if (
-    ball.x <= computer.x + computer.size.x &&
-    ball.x + ball.size >= computer.x &&
-    ball.y <= computer.y + computer.size.y &&
-    ball.y + computer.size.y >= computer.y + 100
-  ) {
-    ball.dx *= -1;
+  if (snake.x === apple.x && snake.y == apple.y) {
+    apple.x =
+      Math.ceil((Math.floor(Math.random() * innerWidth) + 1) / snake.size) *
+      snake.size;
+    apple.y =
+      Math.ceil((Math.floor(Math.random() * innerHeight) + 1) / snake.size) *
+      snake.size;
+    while (
+      apple.y >= innerHeight - snake.size ||
+      apple.x >= innerWidth - snake.size
+    ) {
+      apple.x =
+        Math.ceil((Math.floor(Math.random() * innerWidth) + 1) / snake.size) *
+        snake.size;
+      apple.y =
+        Math.ceil((Math.floor(Math.random() * innerHeight) + 1) / snake.size) *
+        snake.size;
+    }
+    if (apple.y === snake.y && apple.x === snake.x) {
+      apple.x =
+        Math.ceil((Math.floor(Math.random() * innerWidth) + 1) / snake.size) *
+        snake.size;
+      apple.y =
+        Math.ceil((Math.floor(Math.random() * innerHeight) + 1) / snake.size) *
+        snake.size;
+    }
+    snake.tail.push({ x: 0, y: 0 });
   }
 }
 
-// move the paddle up
-function moveUp() {
-  player.dy = -player.speed;
+function MoveRight() {
+  snake.dx = snake.size;
+  snake.dy = 0;
 }
 
-// move the paddle down
-function moveDown() {
-  player.dy = player.speed;
+function MoveLeft() {
+  snake.dx = -snake.size;
+  snake.dy = 0;
 }
 
-// detect key input
+function MoveUp() {
+  snake.dy = -snake.size;
+  snake.dx = 0;
+}
+
+function MoveDown() {
+  snake.dy = snake.size;
+  snake.dx = 0;
+}
+
 document.onkeydown = function(e) {
-  if (e.key === "w") {
-    moveUp();
-  } else if (e.key === "s") {
-    moveDown();
+  if (e.key === "d" && snake.dx === 0) {
+    direction = "right";
+  } else if (e.key === "a" && snake.dx === 0) {
+    direction = "left";
+  } else if (e.key === "w" && snake.dy === 0) {
+    direction = "up";
+  } else if (e.key === "s" && snake.dy === 0) {
+    direction = "down";
   } else if (e.key === "r") {
     location.reload();
+  } else if (e.key === "e") {
+    frameRate(rate * 2);
+  } else if (e.key === "q") {
+    frameRate(rate / 2);
+  } else if (e.key === "x") {
+    if (rate > 6) {
+      rate /= 2;
+    } else {
+      rate *= 2;
+    }
+    frameRate(rate);
+  } else if (e.key === "z") {
+    if (rate < 11) {
+      rate *= 2;
+    } else {
+      rate /= 2;
+    }
+    frameRate(rate);
+  } else if (e.keyCode === 38 && snake.dy === 0) {
+    direction = "up";
+  } else if (e.keyCode === 40 && snake.dy === 0) {
+    direction = "down";
+  } else if (e.keyCode === 39 && snake.dx === 0) {
+    direction = "right";
+  } else if (e.keyCode === 37 && snake.dx === 0) {
+    direction = "left";
   }
 };
 
-// detect key releases
 document.onkeyup = function(e) {
-  if (e.key === "w" || e.key === "s") {
-    player.dy = 0;
+  if (e.key === "e" || e.key === "q") {
+    frameRate(rate);
   }
+};
+
+document.ontouchstart = function(e) {
+  //e.preventDefault();
+  px = e.touches[0].clientX;
+  py = e.touches[0].clientY;
 };
 
 document.ontouchmove = function(e) {
-  player.y = e.touches[0].clientY - 50;
-};
+  e.preventDefault();
+  x = e.touches[0].clientX;
+  y = e.touches[0].clientY;
 
-const settingBtn = document.querySelector("#settings");
-settingBtn.onclick = function() {
-  if (!isPaused) {
-    settingBtn.src =
-      "https://cdn.glitch.com/72202fac-7ff8-4f4f-a7bd-c1b7a41ad338%2F81875F59-673C-4357-AA01-8BC8342899F7.png?v=1602800063138";
-    window.cancelAnimationFrame(pause);
-    document.getElementById("overlay").style.display = "block";
-  } else if (isPaused) {
-    settingBtn.src =
-      "https://cdn.glitch.com/72202fac-7ff8-4f4f-a7bd-c1b7a41ad338%2F477355F3-64B9-4CBA-837D-96775016BC68.png?v=1602798429468";
-    window.requestAnimationFrame(update);
-    document.getElementById("overlay").style.display = "none";
-    ball.dx = 0;
-    ball.dy = 0;
-
-    ball.x = innerWidth / 2 - ballSize / 2;
-    ball.y = innerHeight / 2 - ballSize / 2;
-
-    setTimeout(function() {
-      ball.dx = ballDx;
-      ball.dy = ballDy;
-    }, 1000);
+  if (Math.abs(px - x) > Math.abs(py - y)) {
+    if (px > x && snake.dx === 0) {
+      direction = "left";
+    } else if (px < x && snake.dx === 0) {
+      direction = "right";
+    }
+  } else if (Math.abs(px - x) < Math.abs(py - y)) {
+    if (py > y && snake.dy === 0) {
+      direction = "up";
+    } else if (py < y && snake.dy === 0) {
+      direction = "down";
+    }
   }
-  isPaused = !isPaused;
 };
-
-function off() {
-  document.getElementById("overlay").style.display = "none";
-}
